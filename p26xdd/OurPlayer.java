@@ -11,7 +11,6 @@ import ap26.Board;
 import ap26.Color;
 import ap26.Move;
 import ap26.Player;
-import myplayer.MyBoard;
 import myplayer.MyEval;
 
 public class OurPlayer extends Player {
@@ -36,17 +35,12 @@ public class OurPlayer extends Player {
 
   @Override
   public void setBoard(Board board) {
-    super.setBoard(board);
-    this.board = copyOf(board);
+    syncBoard(board);
   }
 
   @Override
   public Move think(Board board) {
-    if (this.board == null) {
-      setBoard(board);
-    } else {
-      this.board = this.board.placed(board.getMove());
-    }
+    syncBoard(board);
 
     List<Move> legalMoves = this.board.findLegalMoves(getColor());
     if (hasNoPlayableMove(legalMoves)) {
@@ -62,12 +56,13 @@ public class OurPlayer extends Player {
     return this.move;
   }
 
-  private MyBoard copyOf(Board source) {
-    MyBoard copied = new MyBoard();
-    for (int k = 0; k < Board.LENGTH; k++) {
-      copied.set(k, source.get(k));
+  private void syncBoard(Board board) {
+    super.setBoard(board);
+    if (this.board == null) {
+      this.board = new MyBoard(board);
+      return;
     }
-    return copied;
+    this.board.syncFrom(board);
   }
 
   private boolean isBlack() {
