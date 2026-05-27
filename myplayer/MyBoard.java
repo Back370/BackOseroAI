@@ -118,7 +118,10 @@ public class MyBoard implements Board, Cloneable {
       if (c != NONE) continue;
       for (var line : lines(k)) {
         var outflanking = outflanked(line, color);
-        if (outflanking.size() > 0) moves.add(k);
+        if (outflanking.size() > 0) {
+          moves.add(k);
+          break;
+        }
       }
     }
     return moves;
@@ -139,7 +142,7 @@ public class MyBoard implements Board, Cloneable {
     for (int k: line) {
       var c = get(k);
       if (c == NONE || c == BLOCK) break;
-      if (c == color) return flippables;
+      if (c == color) return flippables.isEmpty() ? new ArrayList<Move>() : flippables;
       flippables.add(new Move(k, color));
     }
     return new ArrayList<Move>();
@@ -149,17 +152,26 @@ public class MyBoard implements Board, Cloneable {
     var b = clone();
     b.move = move;
 
-    if (move.isPass() | move.isNone())
+    if (move.isPass() || move.isNone())
       return b;
 
     var k = move.getIndex();
     var color = move.getColor();
+    if (b.get(k) != NONE)
+      return b;
+
     var lines = b.lines(k);
+    var flippedAny = false;
     for (var line: lines) {
-      for (var p: outflanked(line, color)) {
+      var flippables = b.outflanked(line, color);
+      if (flippables.size() > 0)
+        flippedAny = true;
+      for (var p: flippables) {
         b.board[p.getIndex()] = color;
       }
     }
+    if (!flippedAny)
+      return b;
     b.set(k, color);
 
     return b;

@@ -156,6 +156,7 @@ public class MyBoard implements Board, Cloneable {
       for (var line : lines(k)) {
         if (!outflanked(line, color).isEmpty()) {
           moves.add(k);
+          break;
         }
       }
     }
@@ -182,7 +183,7 @@ public class MyBoard implements Board, Cloneable {
         break;
       }
       if (current == color) {
-        return flippables;
+        return flippables.isEmpty() ? new ArrayList<Move>() : flippables;
       }
       flippables.add(new Move(k, color));
     }
@@ -200,10 +201,22 @@ public class MyBoard implements Board, Cloneable {
 
     int index = move.getIndex();
     Color color = move.getColor();
+    if (copied.get(index) != NONE) {
+      return copied;
+    }
+
+    boolean flippedAny = false;
     for (var line : copied.lines(index)) {
-      for (var flipped : outflanked(line, color)) {
+      var flippables = copied.outflanked(line, color);
+      if (!flippables.isEmpty()) {
+        flippedAny = true;
+      }
+      for (var flipped : flippables) {
         copied.board[flipped.getIndex()] = color;
       }
+    }
+    if (!flippedAny) {
+      return copied;
     }
     copied.set(index, color);
     return copied;
