@@ -125,9 +125,10 @@ public class MyPlayer extends ap26.Player {
     // 1. 相手の直前手を反映
     this.board = this.board.placed(board.getMove());
 
-    if (this.board.findNoPassLegalIndexes(getColor()).size() == 0) {
-      // 2. 合法手なし → パス
-      this.move = Move.ofPass(getColor());
+    // 2. 合法手一覧は「打てなければパス 1 手だけを返す」設計に揃える
+    List<Move> legalMoves = this.board.findLegalMoves(getColor());
+    if (legalMoves.size() == 1 && legalMoves.get(0).isPass()) {
+      this.move = legalMoves.get(0);
     } else {
       // 3. 黒視点で探索するため、白番のときは盤面を反転
       MyBoard searchBoard = isBlack() ? this.board.clone() : this.board.flipped();

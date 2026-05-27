@@ -86,13 +86,7 @@ public class MyBoard implements Board, Cloneable {
     var cs = countAll();
     var bs = cs.getOrDefault(BLACK, 0L);
     var ws = cs.getOrDefault(WHITE, 0L);
-    var ns = LENGTH - bs - ws;
-    int score = (int) (bs - ws);
-
-    if (bs == 0 || ws == 0)
-        score += Integer.signum(score) * ns;
-
-    return score;
+    return (int) (bs - ws);
   }
 
   Map<Color, Long> countAll() {
