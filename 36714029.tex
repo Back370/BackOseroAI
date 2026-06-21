@@ -1,0 +1,619 @@
+\documentclass[10pt,a4j]{ujarticle} % upLaTeX: ujarticle, pLaTeX: jarticle
+\西暦
+\usepackage{graphicx}
+\usepackage{url}
+\usepackage{listings,jlisting}
+\usepackage{ascmac}
+\usepackage{amsmath,amssymb}
+
+%ここからソースコードの表示に関する設定
+\lstset{
+  basicstyle={\ttfamily},
+  identifierstyle={\small},
+  commentstyle={\smallitshape},
+  keywordstyle={\small\bfseries},
+  ndkeywordstyle={\small},
+  stringstyle={\small\ttfamily},
+  frame={tb},
+  breaklines=true,
+  columns=[l]{fullflexible},
+  numbers=left,
+  xrightmargin=0zw,
+  xleftmargin=3zw,
+  numberstyle={\scriptsize},
+  stepnumber=1,
+  numbersep=1zw,
+  lineskip=-0.5ex
+}
+%ここまでソースコードの表示に関する設定
+
+\title{プログラミング応用（知能処理）レポート}
+\author{
+ 36714029 / shiwasu（グループ番号 6）\\
+}
+\date{\today}
+
+
+\begin{document}
+\maketitle
+
+\begin{table}[h]
+\center
+\caption{相互評価}
+\begin{tabular}{l|r}
+氏名 & 作業割合 (\%) \\
+\hline \hline
+山本賢人 & 70\\
+遠藤裕人(自分) & 18 \\
+堀浩介 & 12 \\
+\end{tabular}
+\vspace{1ex}
+\\
+{\small 作業全体を100としたときの，各メンバの作業量を申告すること．\\
+自分の主観を正直に報告すること．グループ内で調整してはならない．}
+\end{table}
+
+\paragraph{全体的な自己評価／作業時間: } A  14時間
+
+\paragraph{全体的な考察: } 「乱択相手に勝てること」と「強い相手に勝てること」は
+別物である，という点が本演習最大の学びである．課題1eで機動力を過信した初期φは
+対Random 99\%でも対改良版で30\%まで落ちたが，位置評価を主軸に据え機動力・石数を
+段階別の重みへ修正したところ対改良版61\%と逆転でき，変更前より強くできた（表\ref{tab:1e}）。
+この段階別評価の発想を踏まえ，大会版 {\verb+p26x42+} では評価項をさらに増やして序盤・終盤で
+重み分けし，終盤のみ確定石差を重くすることで安定させ，ベースラインに大幅な改善（表\ref{tab:win}）を得た．
+また高速化では，bookにより総探索ノードを39\%・総思考時間を17.7\%削減したが，
+1秒あたりの訪問ノード数（nps）はむしろ低下した（表\ref{tab:nps}）。これは
+「探索しない最適化」を入れた結果であり，npsだけで速度を測る危うさを実測で理解できた．
+
+\paragraph{全体的な感想: } 評価関数や定石をいじるたびに勝率が目に見えて変わるのが
+面白く，つい対戦回数を増やして時間を使ってしまった．強くするには直感だけでなく，
+必ず多数対局とプロファイルで検証することが不可欠だと痛感した．
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{概要}
+\begin{screen}
+\begin{enumerate}
+\setlength{\itemsep}{2pt}
+\setlength{\parskip}{0pt}
+\item プレイヤ名: {\verb+p26x42+}（グループ6）
+\item 大会成績: 第1位  891 pts, 勝率88.7% (47勝6敗0分)
+\item グループ内での作業分担状況の概要: 
+      課題1は分担せずにそれぞれが全てのプログラムを作成した。
+      最終課題では山本が探索アルゴリズムと評価関数、bookデータの確保など全体的に担当，
+      遠藤（自分）が課題1のテスト・検証やスライド作成、発表、デバックを担当，
+      堀がテスト・検証やデバックを担当した．
+\item 自分の担当範囲と簡潔なアピール: テスト・検証を担当．段階的に
+      ベースライン（位置評価のみ）→段階別動的評価({\verb+p26x42base+})→book版({\verb+p26x42+})
+      と多数対局で比較し，ベースAI比100\%・平均26.33石差，book版でノード39\%削減を確認した．
+      作成したプログラムのコードを解析し、要点を理解してスライドに落とし込んだ。
+\end{enumerate}
+\end{screen}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{プレイヤについて}
+
+大会提出プレイヤ {\verb+p26x42+} について述べる（課題2c の必須3点に対応）．
+
+\subsection{使用した探索アルゴリズムとその工夫点}
+
+探索は α-β 法を用いる．工夫点は，白番のとき盤面を {\verb+flipped()+} で反転して
+\textbf{常に黒視点で探索する}点である（リスト\ref{src:flip}）．
+理由は，評価関数が黒視点で書かれているため，反転すれば「反転後の黒（=元の白）」の
+優劣を同じコードで評価でき，探索本体から色の分岐を完全に排除できるからである．
+打ち切り判定は {\verb+depth > depthLimit+} で，深さ0から着手するため
+実際の先読み手数は depthLimit+1 プライになる．
+さらに序盤は\textbf{定石(book)}を引いて探索自体を省略し，序盤の手を安定させた．
+
+\begin{lstlisting}[caption=黒視点固定のための盤面反転（OurPlayer\#think）,label=src:flip]
+// 黒視点で探索するため、白番のときは盤面を反転
+MyBoard searchBoard = isBlack() ? this.board.clone() : this.board.flipped();
+this.move = null;
+maxSearch(searchBoard, NEGATIVE_INFINITY, POSITIVE_INFINITY, 0);
+this.move = this.move.colored(getColor()); // 反転して読んだ手の色を戻す
+\end{lstlisting}
+
+\subsection{評価関数とその工夫点}
+
+方針は\textbf{段階別の動的評価}である．ベースオセロAIがほぼ位置の静的評価しか
+していないのに対し，{\verb+p26x42base+} は局面を前半・後半に分け，
+\textbf{前半}は「着手可能数（機動力）・差確定石差・フロンティア差」を重み付けして評価し，
+\textbf{後半}は「着手可能数」を最も重く評価する．機動力で相手の打てる手を狭め，
+差確定石差で取り返されない優位を積み，フロンティア（空きに接する自石）を減らして
+相手に手を与えないことを狙う．これがベースラインに対する勝率改善（表\ref{tab:win}）に
+寄与した．課題1eで機動力を過信した初期φは対強相手で失敗したが，位置評価を主軸に据えて
+段階別に重み分けしたところ変更前の改良マス重みに勝ち越せた（表\ref{tab:1e}）。この段階別評価を
+さらに発展させ，評価項を増やして重み分けし安定させた点が工夫である．
+
+\begin{table}[h]\center
+\caption{ベースラインに対する勝率の改善幅（各6局, 平均石差つき）}\label{tab:win}
+\begin{tabular}{l|c|c|r}
+マッチアップ & W-D-L & 勝率 & 平均石差 \\ \hline\hline
+ベースオセロAI vs Random & 6-0-0 & 100.00\% & 23.17 \\
+{\tt p26x42base} vs Random & 6-0-0 & 100.00\% & 32.33 \\
+{\tt p26x42base} vs ベースオセロAI & 6-0-0 & 100.00\% & 26.33 \\
+{\tt p26x42} vs {\tt p26x42base} & 5-0-1 & 83.33\% & 3.33 \\
+{\tt p26x42} vs ベースオセロAI & 6-0-0 & 100.00\% & 23.67 \\
+\end{tabular}
+\end{table}
+
+\subsection{高速化とその工夫点}
+
+序盤の\textbf{定石(book)}が高速化にも寄与した．bookで序盤の探索を丸ごと省略できるため，
+標準盤を初手から終局まで通すと，book無効比で\textbf{総探索ノードを約39\%，
+総思考時間を約17.7\%削減}した（表\ref{tab:nps}）．
+削減率はそれぞれ $(534{,}944{,}374-326{,}263{,}489)/534{,}944{,}374=39.0\%$，
+$(58.141-47.844)/58.141=17.7\%$ である．
+
+\subsection{実行速度（1秒あたりの訪問ノード数）}
+
+cse本番環境（{\tt cse.cs.nitech.ac.jp}）で標準盤を初手から終局まで1局実行し，
+総探索ノード数を総思考時間で割って計測した（表\ref{tab:nps}）．
+book無効で\textbf{9.20 Mnps}，book有効で 6.82 Mnps であった．
+なおbook有効時にnpsが下がる理由は\ref{sec:bad}節で考察する．
+
+\begin{table}[h]\center
+\caption{探索速度（cse本番, 標準盤 初手〜終局 1局）}\label{tab:nps}
+\begin{tabular}{l|r|r|r}
+ & 総ノード数 & 総思考時間 & 探索速度 \\ \hline\hline
+{\tt p26x42} book なし & 534{,}944{,}374 & 58.141 s & 9.20 Mnps \\
+{\tt p26x42} book あり & 326{,}263{,}489 & 47.844 s & 6.82 Mnps \\
+\end{tabular}
+\end{table}
+
+\subsection{その他の工夫点}
+
+変形盤面（{\verb+BLOCK+} あり）に対応した．{\verb+MyBoard+} は反転線の探索で
+{\verb+BLOCK+} を壁として扱い（{\verb+outflanked+}），標準盤・変形盤の両方で
+リーグ戦が完走することを確認した．また終局時に片方の石が全滅した場合は
+{\verb+score()+} で空きマスを勝者に加算し，完全勝ちを正しく評価している．
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{考察}
+
+\subsection{実績に期待通りの好影響を与えた工夫点}
+
+\textbf{段階別の動的評価}と\textbf{定石(book)}は期待通り有効だった．
+位置の静的評価のみのベースオセロAIに対し，{\verb+p26x42base+} は直接対決で
+6戦全勝・平均26.33石差の圧勝（表\ref{tab:win}）。機動力・差確定石差・フロンティア差を
+段階別に重み付けしたことで，相手の打てる手を狭めつつ取り返されない優位を積めたためである．
+bookを足した {\verb+p26x42+} も {\verb+p26x42base+} に 5勝0分1敗（83.33\%）と勝ち越し，
+序盤の手が安定して改善が積み上がったことを確認できた．
+課題1でも探索深さの増加は勝率を単調に押し上げた（表\ref{tab:1a}）。
+
+\subsection{実績に期待ほどの好影響を与えられなかった工夫点}
+
+\textbf{bookによる勝率の上乗せ}は限定的だった．{\verb+p26x42+} 対ベースオセロAIの
+平均石差は 23.67 で，book無しの {\verb+p26x42base+} 対ベースAI（26.33）より
+むしろ小さい（表\ref{tab:win}）。bookの価値は「弱い相手への石差拡大」ではなく
+「序盤の安定と探索コスト削減」にあり，弱い相手相手では勝敗自体は元々ほぼ決していて
+上乗せ余地が小さかったためと考える．真価は強豪相手の序盤事故防止で出ると見込む．
+
+\subsection{実績に期待外れの悪影響を及ぼした工夫点}
+\label{sec:bad}
+
+\textbf{book有効時のnps低下}が一見の期待に反した（表\ref{tab:nps}, 9.20→6.82 Mnps）。
+ただしこれは悪影響ではなく\textbf{解釈の問題}である．bookは「分岐が広く軽い」序盤ノードを
+探索せず省くため，実際に探索するのは中終盤の重い局面に偏り，1ノードあたりの平均コストが
+上がって見かけのnpsが下がる．総ノードは39\%・総思考時間は17.7\%減っており目的は達成している．
+npsは速度の代理指標にすぎず，「探索しない最適化」の効果はnpsでは測れないと学んだ．
+なお課題1eでは初期φが機動力の過大評価で対強相手30\%まで落ちたが，位置評価主軸＋段階別の
+重み分けへ修正して対改良版61\%へ逆転した（表\ref{tab:1e}）。大会版もこの段階別評価を踏襲している．
+
+\subsection{今後の課題}
+
+発展課題として\textbf{置換表付き move ordering・NegaScout（1g）・マルチスレッド
+並列化（1h）・ビットボード（1i）を試作}し，NegaScout で 15〜26\% のノード削減，
+ビットボードで合法手検出の約 25 倍高速化を確認した（課題1g〜1i 参照）。これらを
+大会版 {\verb+p26x42+} へ統合するのが次の目標である．特にビットボードによる
+着手・反転処理の全面置き換えで nps を底上げし，浮いた時間を探索深さに回したい．
+並列化はルート分割では並列度が足りないと分かったため，PV 部分木を再帰分割する
+細粒度並列（YBWC）への発展と，終盤の完全読みの導入を進める．あわせて book の拡充と
+棋譜分析による評価重みの自動調整も進める予定である．
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{課題}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{課題1}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\paragraph{課題1a（コード読解と実験）}
+リスト1〜9を通読した．実験1（探索深さ）と実験2（手順並び替え）の結果を
+表\ref{tab:1a}・表\ref{tab:1b}に示す（各50局，先後25局ずつ，vs RandomPlayer）。
+
+\textbf{プログラム}: 探索打ち切りは {\verb+depth > depthLimit+}（{\verb+>=+}でない）で行う．
+深さ0から着手するため先読みは depthLimit+1 プライになる．手順並び替え {\verb+order()+} は
+同評価値の手の選択順だけを {\verb+Collections.shuffle+} でランダム化する（リスト\ref{src:term}）．
+\begin{lstlisting}[caption=探索打ち切りと手順並び替え（MyPlayer）,label=src:term]
+boolean isTerminal(Board b, int depth) {
+  return b.isEnd() || depth > this.depthLimit; // depth0から着手→先読みはdepthLimit+1プライ
+}
+List<Move> order(List<Move> moves) {
+  List<Move> shuffled = new ArrayList<>(moves);
+  Collections.shuffle(shuffled);             // 同評価値手の選択順だけをランダム化
+  return shuffled;
+}
+\end{lstlisting}
+
+\textbf{実行例}: 盤面描画を省いた自作ベンチ {\verb+myplayer.Bench+}（先後を半々で入替）で測定した．
+\begin{lstlisting}[caption=実験1・実験2の実行例,label=ex:1a]
+$ java myplayer.Bench depth
+## 実験1: 探索深さ depthLimit と勝率 (vs RandomPlayer, 各50局)
+depthLimit=0 :  39勝   7敗   4分 /  50局  勝率  78.0%  得点率  82.0%
+depthLimit=1 :  44勝   4敗   2分 /  50局  勝率  88.0%  得点率  90.0%
+depthLimit=2 :  45勝   3敗   2分 /  50局  勝率  90.0%  得点率  92.0%
+depthLimit=3 :  49勝   1敗   0分 /  50局  勝率  98.0%  得点率  98.0%
+depthLimit=4 :  50勝   0敗   0分 /  50局  勝率 100.0%  得点率 100.0%
+$ java myplayer.Bench shuffle
+shuffle 有 :  45勝   3敗   2分 /  50局  勝率  90.0%  得点率  92.0%
+shuffle 無 :  48勝   2敗   0分 /  50局  勝率  96.0%  得点率  96.0%
+\end{lstlisting}
+
+\textbf{評価}: 実験1・実験2の結果を表\ref{tab:1a}・表\ref{tab:1b}にまとめる．
+
+\begin{table}[h]\center
+\caption{実験1: depthLimit と勝率（vs Random, 各50局）}\label{tab:1a}
+\begin{tabular}{c|c|c}
+depthLimit & 勝/敗/分 & 勝率 \\ \hline\hline
+0 & 39/7/4 & 78.0\% \\
+1 & 44/4/2 & 88.0\% \\
+2 & 45/3/2 & 90.0\% \\
+3 & 49/1/0 & 98.0\% \\
+4 & 50/0/0 & 100.0\% \\
+\end{tabular}
+\end{table}
+
+\begin{table}[h]\center
+\caption{実験2: order()のshuffle有無（depth=2, vs Random, 各50局）}\label{tab:1b}
+\begin{tabular}{c|c|c}
+ & 勝/敗/分 & 勝率 \\ \hline\hline
+shuffle 有 & 45/3/2 & 90.0\% \\
+shuffle 無 & 48/2/0 & 96.0\% \\
+\end{tabular}
+\end{table}
+
+\textbf{実験1の考察}: 「深く読むほど強い」という当初の見込み通り\textbf{成功}した．勝率は
+深さに対し単調増加し（78→88→90→98→100\%），depth0（評価1段）でも78\%あることから
+マス重み評価自体が乱択より十分強い．depth3以降はほぼ取りこぼしが無く，対Randomでは
+これ以上の深化の効果は飽和する．計算時間は指数的に増えるため，相手の強さに応じて
+深さを選ぶべきだと確認できた．
+
+\textbf{実験2の考察（グループ議論）}: shuffleは\textbf{同評価値の手の選択順}だけを変える．
+ルートの更新条件が {\verb+childValue > alpha+}（狭義）のため，同点の手が複数あると先に試した
+手が採用され，shuffle無では {\verb+findLegalMoves+} の盤面走査順（実質固定手），shuffle有では
+ランダムな1手を選ぶ．探索の最善値自体は変わらず，勝敗を左右するのは同点時の手だけなので，
+対Randomでは両者とも90\%超になる．差6pt（45/3/2 対 48/2/0）は各50局の標準誤差（約4pt）に
+収まり統計的に有意でなく，shuffle無が高いのは偶然の範囲だと結論した．shuffleの本質的価値は
+勝率向上ではなく，手を決定論的にせず相手に読まれにくくする点にあると議論で確認した．
+
+実験3（読解で生じた疑問3つと答え）:
+(1)\textbf{なぜ白番で盤を反転するか}→対称性の利用で探索から色分岐を排除するため．
+(2)\textbf{なぜ最善手を副作用this.moveで持ち回るか}→unit0のα-βとシグネチャを揃える
+簡略化．ルートでα更新時のみ保存し，全枝同点に備え先頭手を仮登録する．
+(3)\textbf{depthLimitの境界の意味}→深さ0から着手するため先読みは depthLimit+1 プライになる．
+
+\paragraph{課題1b（HumanPlayer）}
+\textbf{プログラム}: 標準入力から {\verb+"c3"+} 形式の座標（{\verb+".."+} でパス）を受け取り，
+\textbf{合法手のみ受理}する {\verb+HumanPlayer.java+} を実装した．不正入力は再入力させ，
+パスしか無いときは自動でパスする（リスト\ref{src:human}）。
+\begin{lstlisting}[caption=人間の入力を合法手のみ受理する（HumanPlayer\#think）,label=src:human]
+List<Move> legals = board.findLegalMoves(getColor());
+if (legals.size() == 1 && legals.get(0).isPass()) return legals.get(0); // パスのみ→自動パス
+while (true) {
+  Move move = parse(IN.next().trim());          // "c3"→Move, ".."→Pass, 形式不正→null
+  if (move != null && legals.contains(move)) return move; // 合法手のみ受理
+  System.out.println("  不正な手です。合法手から選んで再入力してください: ");
+}
+\end{lstlisting}
+
+\textbf{実行例}: {\verb+MyGame+} の片側を {\verb+HumanPlayer+} に差し替えて対局した．
+\begin{lstlisting}[caption=HumanPlayerの実行例,label=ex:1b]
+[BLACK] あなたの手番です。着手位置を入力 (例: c3):
+  合法手: [c2, b3, e4, d5]
+zz                ← 不正入力
+  不正な手です。合法手から選んで再入力してください:
+e4                ← 合法手
+[BLACK] 合法手なし。パスします。
+\end{lstlisting}
+
+\textbf{評価・考察}: 合法手・不正手・パスのみ・座標範囲外の各ケースで意図通り動作し，
+\textbf{成功}した．本クラスはAIの強さには影響しない補助クラスだが，自作AIと人間が
+直接対局して着手を目視確認でき，評価関数の妥当性を感覚的に検証する土台になった．
+
+\paragraph{課題1c（200局の勝率）}
+\textbf{プログラム・実行例}: {\verb+Bench c+} で MyPlayer(depth=2) vs RandomPlayer を
+200局（先後各100）対戦させた．
+\begin{lstlisting}[caption=課題1cの実行例,label=ex:1c]
+$ java myplayer.Bench c
+## 課題1c: MyPlayer vs RandomPlayer 200局 (先手後手各100)
+MyPlayer(depth=2) : 177勝  18敗   5分 / 200局  勝率  88.5%  得点率  89.8%
+\end{lstlisting}
+
+\textbf{評価・考察}: \textbf{177勝18敗5分（勝率88.5\%，得点率89.8\%）}であり，
+深さ2のα-βが乱択に圧勝することを当初の見込み通り\textbf{確認できた}．200局という
+十分な標本で勝率88.5\%（標準誤差約2.3pt）と安定しており，以降の改良（1d〜1f）は
+この値をベースラインとして比較する．
+
+\paragraph{課題1d（重み行列Mの改良）}
+\textbf{プログラム}: 元の {\verb+MyEval+} が外周を一律10としていたのに対し，
+{\verb+ImprovedEval+} は角・X・C・辺・中央を区別した重み行列に細分化した（リスト\ref{src:m2}）。
+角は二度と返らない最重要マスなので最大の正(45)，Xマス・Cマスは相手に角を与えやすいので負，
+辺は安定しやすいので中程度の正(11)，中央は早期に占める価値が低いので小さな正(2)，
+という経験則に基づく．
+\begin{lstlisting}[caption=細分化した重み行列（ImprovedEval）,label=src:m2]
+static final float[][] M2 = {        // 6x6, 黒視点
+    { 45, -3, 11, 11, -3, 45 },      // 角=45(最重要), C=-3
+    { -3, -7, -4, -4, -7, -3 },      // X=-7(角を渡しやすい)
+    { 11, -4,  2,  2, -4, 11 },      // 辺=11, 中央=2
+    { 11, -4,  2,  2, -4, 11 },
+    { -3, -7, -4, -4, -7, -3 },
+    { 45, -3, 11, 11, -3, 45 } };
+\end{lstlisting}
+
+\textbf{実行例}: 実験プロトコル（改良前→改良後の対Random勝率と直接対決）に従い {\verb+Bench d+} で測定した．
+\begin{lstlisting}[caption=課題1dの実行例,label=ex:1d]
+$ java myplayer.Bench d
+## 課題1d: 重み行列Mの改良 (depth=2)
+(1)改良前 vs Random :  92勝   8敗   0分 / 100局  勝率  92.0%  得点率  92.0%
+(3)改良後 vs Random :  94勝   5敗   1分 / 100局  勝率  94.0%  得点率  94.5%
+(4)改良後 vs 改良前  :  89勝   6敗   5分 / 100局  勝率  89.0%  得点率  91.5%
+\end{lstlisting}
+
+\textbf{評価}: 結果を表\ref{tab:1d}に示す．
+
+\textbf{考察}: (3)-(1)で対Randomが+2pt，かつ(4)改良後 vs 改良前が89\%（{\verb+>+}50\%）で
+大きく勝ち越したため，\textbf{改良は当初の狙い通り成功}と判定した．理由は，角(45)とX/Cマス(負)を
+明確に区別したことで角の取り合いで優位に立てるためである．対Randomの差(+2pt)が小さいのは，
+乱択相手では元々勝率が天井近く改善余地が小さいためであり，改良の効果は同格どうしの
+直接対決(4)に最も明確に現れた．
+
+\begin{table}[h]\center
+\caption{課題1d: 重み行列の改良（depth=2, 各100局）}\label{tab:1d}
+\begin{tabular}{l|c|c}
+対戦 & 勝/敗/分 & 勝率 \\ \hline\hline
+(1) 改良前 vs Random & 92/8/0 & 92.0\% \\
+(3) 改良後 vs Random & 94/5/1 & 94.0\% \\
+(4) 改良後 vs 改良前 & 89/6/5 & 89.0\% \\
+\end{tabular}
+\end{table}
+
+\paragraph{課題1e（評価関数$\phi$の改良）}
+\textbf{プログラム}: $\phi=w_1\psi+w_2(l_b-l_w)+w_3(n_b-n_w)$（$\psi$=マス重み，$l$=機動力，$n$=石数）を
+\textbf{盤上の石数で序盤・中盤・終盤を判定}し段階別重みで実装した（リスト\ref{src:phi}）。
+設計の要点は2点である．(1) 位置評価$\psi$を主軸（$w_1=1$）に据え，機動力は$\psi$を覆い隠さない
+範囲（$w_2\simeq1.5$）に抑える．(2) オセロでは中盤に石数が多いのはむしろ不利（機動力を失う）なので，
+石数項($w_3$)を序盤は負・中盤は0・終盤のみ強い正に効かせ，取り返されない石差を終盤に積む．
+\begin{lstlisting}[caption=段階別の動的評価（PhiEval）,label=src:phi]
+double[] w = (discs <= openMax) ? open : (discs <= midMax) ? mid : end;
+//                          w1   w2    w3        段階の境界 openMax=12, midMax=26
+// open(序盤)= {1.0, 1.5, -0.5}  中盤= {1.0, 1.5, 0.0}  end(終盤)= {1.0, 0.5, 4.0}
+return (float)(w[0]*psi + w[1]*(lb-lw) + w[2]*(nb-nw));
+\end{lstlisting}
+
+\textbf{実行例}: {\verb+Bench e+} で対Randomと，1dの改良マス重み（変更前のより強い相手）の両方と対戦させた．
+\begin{lstlisting}[caption=課題1eの実行例,label=ex:1e]
+$ java myplayer.Bench e
+## 課題1e: 評価関数phi(マス重み+機動力+石数) (depth=2)
+phi評価 vs Random   :  96勝   2敗   2分 / 100局  勝率  96.0%  得点率  97.0%
+phi評価 vs 改良マス重み:  61勝  35敗   4分 / 100局  勝率  61.0%  得点率  63.0%
+\end{lstlisting}
+
+\textbf{評価}: 結果を表\ref{tab:1e}に示す．
+
+\textbf{考察}: 対Randomで96\%を保ちつつ，\textbf{変更前}の改良マス重み(1d)に対しても61\%（35敗4分）と
+\textbf{勝ち越し，変更前より強くなったため改良は成功}と判定した（各100局，400局でも61.5\%で再現）。
+ただし一筋縄ではなく，当初は機動力を$w_2=8$と過大評価したため対改良マス重み29\%まで沈んだ．
+「機動力＋石数を足せば必ず強くなる」わけではなく，depth2の浅い読みでは過大な機動力項が中盤の
+評価を歪めて位置評価単体に劣ることを実測した．そこで\textbf{$\psi$を主軸に据え機動力を$\psi$を
+覆い隠さない範囲へ抑え，石数項を終盤に限定}したところ，変更前を上回って逆転できた．
+「Randomに勝てる」ことと「強い相手に勝てる」ことは別物であり，後者は段階別の重み分けで
+初めて達成できるという，本演習最大の教訓を得た．この段階別評価の発想は大会版へ受け継いだ．
+
+\begin{table}[h]\center
+\caption{課題1e: $\phi$評価（depth=2, 各100局）}\label{tab:1e}
+\begin{tabular}{l|c|c}
+対戦 & 勝/敗/分 & 勝率 \\ \hline\hline
+$\phi$ vs Random & 96/2/2 & 96.0\% \\
+$\phi$ vs 改良マス重み（変更前）& 61/35/4 & 61.0\% \\
+\end{tabular}
+\end{table}
+
+\paragraph{課題1f（move ordering）}
+\textbf{プログラム}: 各ノードで子手を1手だけ進めた局面の評価値 $\phi(q_i)$ で並べ替え，
+良い手から先に探索する（max側は降順，min側は昇順）。これによりα-βカットが早く起きる
+ことを狙う（リスト\ref{src:ord}）。枝刈り効果は {\verb+CountingEval+} で葉評価の総呼出回数を
+数えて測った．
+\begin{lstlisting}[caption=1手読み評価で整列（OrderingPlayer\#ordered）,label=src:ord]
+List<Move> ordered(Board board, Color color, boolean descending) {
+  List<Move> moves = board.findLegalMoves(color);
+  if (moves.size() <= 1) return moves;
+  Comparator<Move> byPhi = Comparator.comparingDouble(m -> eval.value(board.placed(m)));
+  if (descending) byPhi = byPhi.reversed();     // max側=降順, min側=昇順
+  return moves.stream().sorted(byPhi).toList();
+}
+\end{lstlisting}
+
+\textbf{実行例}: {\verb+Bench f+} で depth=4・各40局，ランダム順と整列順の評価呼出回数を比較した．
+\begin{lstlisting}[caption=課題1fの実行例,label=ex:1f]
+$ java myplayer.Bench f
+## 課題1f: move ordering の枝刈り効果 (depth=4, 各40局, 評価呼出回数)
+ランダム順   : 評価呼出 650,207 回, 勝率  97.5%
+move ordering: 評価呼出 2,238,040 回, 勝率 100.0%
+評価呼出の削減率 : -244.2%
+\end{lstlisting}
+
+\textbf{評価}: 結果を表\ref{tab:1f}に示す．
+
+\textbf{考察}: 勝率は上がった(97.5→100\%)ものの，当初の狙いだった評価回数の削減は実現せず
+約3.4倍に\textbf{増加し，本設定では逆効果}と判定した．原因は，全ノードで全子手を1手進めて
+評価し整列するため，整列のための浅い評価コストがα-βカットによる削減量を上回ったためである．
+6×6・depth4は元々探索木が小さく，「整列の精度 対 計算時間」のトレードオフが時間側に倒れた
+典型例である．\textbf{成功に向けた方策}: 整列キーをより安価に（置換表のスコアやマス重みのみ）し，
+ルート近傍の数層だけ整列する，killer-move／履歴ヒューリスティックで全評価を避ける
+（詳細は\ref{sec:bad}節）。
+
+\begin{table}[h]\center
+\caption{課題1f: move orderingの枝刈り効果（depth=4, 各40局）}\label{tab:1f}
+\begin{tabular}{l|r|c}
+手順 & value()呼出回数 & 勝率 \\ \hline\hline
+ランダム順 & 650{,}207 & 97.5\% \\
+move ordering & 2{,}238{,}040 & 100.0\% \\
+\end{tabular}
+\end{table}
+
+\paragraph{課題1g（NegaScout＋置換表付きmove ordering）}
+α-β 探索を negamax 形式に統一し，\textbf{置換表（ゼロブリストハッシュ）付き
+move ordering} と \textbf{NegaScout（PVS）}を実装した（{\verb+NegaScoutPlayer+}）。
+標準初期局面を各深さで 1 回探索し，move ordering のみの α-β を基準に，置換表・
+NegaScout を段階的に加えたときの訪問ノード数を計測した（表\ref{tab:1g}）。
+NegaScout で全深さにわたり\textbf{約 15〜26\% のノードを削減}しつつ，三手法の
+\textbf{最善手・評価値は完全に一致}した（探索結果を変えずにコストだけ削減できた）。
+
+\begin{table}[h]\center
+\caption{課題1g: 枝刈りの段階的強化（標準初期局面・各深さ1回・ImprovedEval）}\label{tab:1g}
+\begin{tabular}{c|r|r|r}
+depth & α-β(orderingのみ) & ＋置換表 & ＋NegaScout \\ \hline\hline
+4 &    288 &    288 &   227 ($-$21.2\%) \\
+5 &    628 &    628 &   490 ($-$22.0\%) \\
+6 &  1{,}727 &  1{,}717 & 1{,}462 ($-$15.3\%) \\
+7 &  3{,}392 &  3{,}325 & 2{,}495 ($-$26.4\%) \\
+8 & 11{,}203 & 10{,}801 & 8{,}652 ($-$22.8\%) \\
+\end{tabular}\\
+{\small 数値は訪問ノード数。括弧内は α-β 比の削減率。}
+\end{table}
+
+\textbf{考察}: 置換表単体の削減は浅い深さでほぼ 0，深さ 8 でも 3.6\% に留まった．
+これは\textbf{強い move ordering の下では同一局面の再訪（transposition）が少なく}，
+かつ初期局面からの一括探索では合流が起きにくいためである．真価は中盤の合流が
+多い局面や反復深化との併用で出ると見込む．一方 NegaScout はヌル窓が安定して効き，
+move ordering との相乗で最も効果が大きかった．1f の「安価な整列キーが必要」という
+反省どおり，置換表の最善手を整列の先頭に流用することで，追加コストなく ordering を
+強化できた点も設計上の工夫である．
+
+\paragraph{課題1h（マルチスレッド並列化）}
+\textbf{ルート分割（root splitting）}で並列化した（{\verb+ParallelPlayer+}）。
+ルートの合法手をスレッドへ\textbf{重複なく}割り当てることで，課題が求める
+「各スレッドで探索する局面がスレッド間で重複しない工夫」を満たす．各スレッドは
+\textbf{専用の置換表}を持ちロックなしで部分木を読む．ローカル環境（10 論理コア）・
+標準初期局面・depth=9 で計測した（表\ref{tab:1h}）。
+
+\begin{table}[h]\center
+\caption{課題1h: ルート分割の速度向上（depth=9, 標準初期局面）}\label{tab:1h}
+\begin{tabular}{l|r|r|r}
+方式 & 実時間 & 総ノード & 速度向上 \\ \hline\hline
+逐次 1スレッド            & 4068 ms & 15{,}290 & 1.00x \\
+(A)フル窓 4スレッド       & 2655 ms & 33{,}129 & 1.53x \\
+(A)フル窓 8スレッド       & 2801 ms & 33{,}129 & 1.45x \\
+(B)α共有 4スレッド        & 4203 ms & 19{,}513 & 0.97x \\
+\end{tabular}\\
+{\small (A) 各手をフル窓で読む素のルート分割。(B) PV を先読みして α を確定後，
+残りを共有 α で並列化（YBWC 風）。}
+\end{table}
+
+\textbf{考察}: 素のルート分割(A)は 4 スレッドで 1.53 倍に短縮したが，スレッド間で
+α を共有しないため\textbf{総ノードが 2.2 倍に膨張}した．そこで α 共有(B)（PV を
+先に逐次で読んでから残りを並列化）にするとノード膨張は 1.3 倍に抑えられたが，
+今度は\textbf{逐次に読む PV 部分木が全体を支配して（アムダールの法則）速度向上が
+消えた}．原因は，6×6 の初期局面はルート合法手が 4 手しかなく，しかも対称で評価が
+拮抗するため，ルート粒度では並列化できる独立作業が乏しい点にある．実効的な
+並列化には PV 部分木の内部を再帰的に分割する細粒度並列（YBWC）が必要だと実測から
+理解できた．
+
+\paragraph{課題1i（ビットボード）}
+6×6 盤を 1 個の {\verb+long+}（36 ビット）に詰め，黒石・白石・壁の 3 マスクで
+表現するビットボード（{\verb+BitBoard+}）を実装した．着手可能位置の検出を，
+マスごとの逐次走査ではなく\textbf{8 方向のビットシフトで全マス一括（並列）}に
+行う．ランダム対局で集めた 13{,}009 局面×両色について，配列走査版
+{\verb+findLegalMoves+} と着手可能マス集合が\textbf{完全一致}することを確認し
+（不一致 0 件），スループットを比較した（表\ref{tab:1i}）。
+
+\begin{table}[h]\center
+\caption{課題1i: 着手可能位置検出のスループット（13{,}009局面×2色×200反復）}\label{tab:1i}
+\begin{tabular}{l|r|r}
+手法 & 実時間 & スループット \\ \hline\hline
+配列走査版 {\tt findLegalMoves} & 31{,}058 ms & 0.17 Mcalls/s \\
+ビットボード版 {\tt legalMoves} &  1{,}213 ms & 4.29 Mcalls/s \\
+\end{tabular}\\
+{\small 5{,}203{,}600 回の検出を計測。ビットボードが\textbf{約 25 倍}高速。}
+\end{table}
+
+\textbf{考察}: 配列走査版は 36 マス×8 方向をループで走査し，さらに各マスで
+{\verb+List+} を生成するため遅い．ビットボードは全マスをまとめてシフト演算する
+ため分岐とアロケーションが消え，約 25 倍に高速化した．壁(BLOCK)も「相手石の連結が
+自然に途切れる」ため変形盤に対応する．これは課題1k（nps 改善）にも直結する成果である．
+
+\paragraph{課題1j・1k（その他の改良）}
+1k（1 秒あたり訪問ノード数の改善）は，本節の置換表（再探索の削減）とビットボード
+（合法手検出の約 25 倍高速化）が直接寄与する．1j（その他の方法での評価関数改良）は，
+大会版の\textbf{段階別の動的評価}（「プレイヤについて」節）として実施済みである．
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{課題2}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\paragraph{課題2a（リーグ戦 ap26.league の理解）}
+\textbf{プログラム}: 単独でゲームを進める {\verb+MyGame+}（課題1）と異なり，
+{\verb+ap26.league.League+} は複数プレイヤーの総当たり戦を実行する．プログラミング応用杯と
+同じ枠組みであり，各プレイヤを登録すると全対戦カードを自動で消化し，棋譜（{\verb+d2e4c5b3...+}
+形式）と勝敗・石差を出力する．
+
+\textbf{実行例}: 1局の結果は対戦カード・勝者・石差・棋譜の順に1行で出力される．
+\begin{lstlisting}[caption=リーグ戦の出力例（1対戦カード）,label=ex:2a]
+MY24 vs    R -> MY24 won by 12   | d3c3e3f4c5b3...
+\end{lstlisting}
+
+\textbf{評価・考察}: ベースライン（位置評価のみのベースオセロAI，{\verb+RandomPlayer+}）と
+自作プレイヤを総当たりさせ，勝率・石差・棋譜を機械的に比較できることを確認した．
+使用法の理解という当初の目的は\textbf{達成}し，以降の段階的開発(2b)の測定基盤として用いた．
+出力される棋譜を盤面に書き起こせば，負け筋の局面を特定して評価関数の改善につなげられる．
+
+\paragraph{課題2b（大会用プログラムの段階的開発）}
+「合法手を返すだけ」→「深さ2のα-β」→「段階別評価関数」→「定石(book)導入」と
+段階的に強くし，各段階でリーグ戦が標準盤・変形盤(BLOCK)の両方で完走することを
+確認してから次へ進んだ．開発はグループ6でgitのブランチ運用により分担し，
+新機能ごとにベースラインとの勝率（各6〜100局）で改善を検証した（表\ref{tab:win}）。
+段階別評価で {\verb+p26x42base+} がベースAIに全勝・平均26.33石差，
+book導入で {\verb+p26x42+} が {\verb+p26x42base+} に 83.33\% と，
+各段階で確実に勝率が改善したことを確認した．
+
+\textbf{考察}: 段階的開発という方針は当初の狙い通り\textbf{成功}した．各段階でリーグ戦が
+標準盤・変形盤の両方で完走することを確認してから次へ進んだため，どの変更が改善・劣化を
+もたらしたかを勝率で常に追跡でき，最終提出直前の大改造リスクを回避できた．課題1eで
+「Randomに勝てる＝強い」ではないと学んだ反省を活かし，各段階で必ずベースラインとの
+直接対決で検証した点が，安定した改善（表\ref{tab:win}）につながった．
+
+\paragraph{課題2c（発表3要件）}
+発表資料には必須3点を含めた．
+\textbf{(1) 探索速度}: cse本番で標準盤1局を計測し book無効 9.20 Mnps（表\ref{tab:nps}）。
+高速化の要点は定石(book)で，総ノード39\%・総思考時間17.7\%を削減した（\ref{sec:bad}節）。
+\textbf{(2) 評価関数と勝率改善}: 段階別の動的評価（前半=機動力・差確定石差・フロンティア差，
+後半=機動力最重視）を採用し，ベースラインに対し表\ref{tab:win}の改善を得た．
+\textbf{(3) その他の工夫}: 定石(book)による序盤安定，変形盤(BLOCK)対応，
+片側全滅時の石差補正（\ref{sec:bad}節・プレイヤについて節）。チームの独自性は
+段階別評価とbookの組み合わせにある．
+
+\textbf{考察}: 必須3点を実測データ付きで発表でき，大会で第1位（891 pts, 勝率88.7\%）という
+当初の目標を上回る結果を得たため，課題2は\textbf{成功}と結論づける．自分の担当である
+テスト・検証では，各段階を多数対局で比較してベース比100\%・平均26.33石差，book版で
+ノード39\%削減を定量的に確認でき，「直感でなく多数対局とプロファイルで検証する」という
+本演習の教訓を実践できた．
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{課題3}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+本演習を通じた総括的な気づきを記す．\textbf{考察}: 課題1〜2を通じ，AI開発は
+「思いついた工夫を入れる」段階より「その工夫が本当に効いたかを測る」段階のほうが
+本質的だと痛感した．実際，機動力を足した初期のφ評価(1e)は直感では強化のはずが実測では
+対強相手30\%と失敗し，位置評価を主軸に段階別へ作り直して初めて変更前を上回れた．move
+ordering(1f)も直感に反し浅い探索では逆効果だった．逆にbookはnpsを下げつつ総コストを削減する
+（プレイヤについて節）という直感に反する結果だった．したがって今後も，変更ごとに
+ベースラインとの多数対局・プロファイルで定量検証する開発サイクルを徹底したい．
+
+\section{参考文献・謝辞}
+本演習で配布されたリスト1〜9（パッケージ {\verb+ap26+} / {\verb+myplayer+}）および
+総当たり戦フレームワーク {\verb+ap26.league+} を参照した．
+課題1の勝率測定は自作の自動対戦ベンチ {\verb+myplayer.Bench+} により，
+課題2の探索速度は本番環境 {\tt cse.cs.nitech.ac.jp} 上での1局計測により行った．
+
+
+
+\end{document}

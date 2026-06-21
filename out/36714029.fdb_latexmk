@@ -1,0 +1,27 @@
+# Fdb version 4
+["latex"] 1782064043.66632 "/Users/back/back-projects/BackOseroAI/36714029.tex" "out/36714029.dvi" "36714029" 1782064043.77706 2
+  "/Users/back/back-projects/BackOseroAI/36714029.tex" 1782064043.25644 38992 e808f2b25b7a09dcdd64d600e109ebb8 ""
+  "/usr/local/texlive/2026/texmf-dist/tex/latex/graphics-cfg/graphics.cfg" 1465944070 1224 978390e9c2234eab29404bc21b268d1e ""
+  "/usr/local/texlive/2026/texmf-dist/tex/latex/graphics-def/dvips.def" 1759176675 6789 86de240c158ee63ff8a8e12ed82d4c47 ""
+  "/usr/local/texlive/2026/texmf-dist/tex/latex/graphics/graphics.sty" 1748806692 18363 69bb4f5538964bfea50d1e6d89cbe69f ""
+  "/usr/local/texlive/2026/texmf-dist/tex/latex/graphics/graphicx.sty" 1748806692 8118 43b99e52946c33a23f5f43b52d5cc5ec ""
+  "/usr/local/texlive/2026/texmf-dist/tex/latex/graphics/keyval.sty" 1748806692 2671 d9941f4bf4750e9b0603c9a2ec54693b ""
+  "/usr/local/texlive/2026/texmf-dist/tex/latex/graphics/trig.sty" 1748806692 4023 e66acf578d6b564c4670fb57ff336a7a ""
+  "/usr/local/texlive/2026/texmf-dist/tex/latex/listings/listings.cfg" 1763671178 1865 73df61e45e2dfdc239ef37ab16d87d6a ""
+  "/usr/local/texlive/2026/texmf-dist/tex/latex/listings/listings.sty" 1763671178 81627 6a9c17f89f356724d1c9813b7025f0c1 ""
+  "/usr/local/texlive/2026/texmf-dist/tex/latex/listings/lstmisc.sty" 1763671178 77105 002e983b638eadbf04e580642335f689 ""
+  "/usr/local/texlive/2026/texmf-dist/tex/latex/listings/lstpatch.sty" 1710360531 353 9024412f43e92cd5b21fe9ded82d0610 ""
+  "/usr/local/texlive/2026/texmf-dist/tex/latex/url/url.sty" 1388531844 12796 8edb7d69a20b857904dd0ea757c14ec9 ""
+  "/usr/local/texlive/2026/texmf-dist/tex/uplatex/base/ujarticle.cls" 1601501193 25756 696812db1093637a703931ccf3d2e037 ""
+  "/usr/local/texlive/2026/texmf-dist/web2c/texmf.cnf" 1770478701 43630 e9fa012910491fe5ae08a72c3c2997a7 ""
+  "/usr/local/texlive/2026/texmf-var/web2c/pdftex/latex.fmt" 1776499125 3648423 5e810ec3d1f58fe03e5a8756c31993b7 ""
+  "/usr/local/texlive/2026/texmf.cnf" 1774209515 577 648cd9f92f9c0eac486f4c71c85cfbbe ""
+  "36714029.tex" 1782064043.25644 38992 e808f2b25b7a09dcdd64d600e109ebb8 ""
+  "jlisting.sty" 0 -1 0 ""
+  "out/36714029.aux" 0 -1 0 "latex"
+  "out/jlisting.sty" 0 -1 0 ""
+  (generated)
+  "out/36714029.aux"
+  "out/36714029.dvi"
+  "out/36714029.log"
+  (rewritten before read)
