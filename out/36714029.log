@@ -1,96 +1,129 @@
-This is e-upTeX, Version 3.141592653-p4.1.2-u2.02-251130-2.6 (utf8.uptex) (TeX Live 2026) (preloaded format=uplatex 2026.4.18)  22 JUN 2026 02:47
+This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=latex 2026.4.18)  22 JUN 2026 10:45
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
-**36714029.tex
-(./36714029.tex
-pLaTeX2e <2023-02-14u04>+1, based on
+**/Users/back/back-projects/BackOseroAI/36714029.tex
+(/Users/back/back-projects/BackOseroAI/36714029.tex
 LaTeX2e <2025-11-01>
 L3 programming layer <2026-03-20>
 (/usr/local/texlive/2026/texmf-dist/tex/uplatex/base/ujarticle.cls
-Document Class: ujarticle 2020/09/30 v1.8f-u00 Standard upLaTeX class
-\c@@paper=\count274
-(/usr/local/texlive/2026/texmf-dist/tex/uplatex/base/ujsize10.clo
-File: ujsize10.clo 2020/09/30 v1.8f-u00 Standard upLaTeX file (size option)
-LaTeX Font Info:    Font shape `JT2/mc/m/n' will be
-(Font)              scaled to size 9.6222pt on input line 28.
-LaTeX Font Info:    Font shape `JY2/mc/m/n' will be
-(Font)              scaled to size 9.6222pt on input line 28.
+
+! LaTeX Error: This file needs format `pLaTeX2e'
+               but this is `LaTeX2e'.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.17 \NeedsTeXFormat{pLaTeX2e}
+                              
+The current input file will not be processed further,
+because it was written for some other flavor of TeX.
+You're in trouble here.  Try typing  <return>  to proceed.
+If that doesn't work, type  X <return>  to quit.
+
 )
-\c@part=\count275
-\c@section=\count276
-\c@subsection=\count277
-\c@subsubsection=\count278
-\c@paragraph=\count279
-\c@subparagraph=\count280
-\c@figure=\count281
-\c@table=\count282
-\abovecaptionskip=\skip49
-\belowcaptionskip=\skip50
-\symmincho=\mathgroup4
-LaTeX Font Info:    Overwriting symbol font `mincho' in version `bold'
-(Font)                  JY2/mc/m/n --> JY2/gt/m/n on input line 616.
-\toclineskip=\dimen166
-\@lnumwidth=\dimen167
-\bibindent=\dimen168
-\heisei=\count283
-)
+! Undefined control sequence.
+<recently read> \è
+                  
+l.2 \è
+      ¥¿æš¦
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+
+! LaTeX Error: Invalid UTF-8 byte "A5.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.2 \è¥
+       ¿æš¦
+The document does not appear to be in UTF-8 encoding.
+Try adding \UseRawInputEncoding as the first line of the file
+or specify an encoding such as \usepackage [latin1]{inputenc}
+in the document preamble.
+Alternatively, save the file in UTF-8 using your editor or another tool
+
+
+! LaTeX Error: Invalid UTF-8 byte "BF.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.2 \è¥¿
+        æš¦
+The document does not appear to be in UTF-8 encoding.
+Try adding \UseRawInputEncoding as the first line of the file
+or specify an encoding such as \usepackage [latin1]{inputenc}
+in the document preamble.
+Alternatively, save the file in UTF-8 using your editor or another tool
+
+
+! LaTeX Error: Unicode character æš¦ (U+66A6)
+               not set up for use with LaTeX.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.2 \è¥¿æš¦
+           
+You may provide a definition with
+\DeclareUnicodeCharacter 
+
 (/usr/local/texlive/2026/texmf-dist/tex/latex/graphics/graphicx.sty
 Package: graphicx 2024/12/31 v1.2e Enhanced LaTeX Graphics (DPC,SPQR)
-
 (/usr/local/texlive/2026/texmf-dist/tex/latex/graphics/keyval.sty
 Package: keyval 2022/05/29 v1.15 key=value parser (DPC)
-\KV@toks@=\toks18
-)
-(/usr/local/texlive/2026/texmf-dist/tex/latex/graphics/graphics.sty
+\KV@toks@=\toks17
+) (/usr/local/texlive/2026/texmf-dist/tex/latex/graphics/graphics.sty
 Package: graphics 2024/08/06 v1.4g Standard LaTeX Graphics (DPC,SPQR)
-
 (/usr/local/texlive/2026/texmf-dist/tex/latex/graphics/trig.sty
 Package: trig 2023/12/02 v1.11 sin cos tan (DPC)
-)
-(/usr/local/texlive/2026/texmf-dist/tex/latex/graphics-cfg/graphics.cfg
+) (/usr/local/texlive/2026/texmf-dist/tex/latex/graphics-cfg/graphics.cfg
 File: graphics.cfg 2016/06/04 v1.11 sample graphics configuration
 )
 Package graphics Info: Driver file: dvips.def on input line 106.
-
 (/usr/local/texlive/2026/texmf-dist/tex/latex/graphics-def/dvips.def
 File: dvips.def 2025/01/21 v3.2a Graphics/color driver for dvips
 ))
-\Gin@req@height=\dimen169
-\Gin@req@width=\dimen170
-)
-(/usr/local/texlive/2026/texmf-dist/tex/latex/url/url.sty
+\Gin@req@height=\dimen150
+\Gin@req@width=\dimen151
+) (/usr/local/texlive/2026/texmf-dist/tex/latex/url/url.sty
 \Urlmuskip=\muskip17
 Package: url 2013/09/16  ver 3.4  Verb mode for urls, etc.
-)
-(/usr/local/texlive/2026/texmf-dist/tex/latex/listings/listings.sty
-\lst@mode=\count284
-\lst@gtempboxa=\box70
-\lst@token=\toks19
-\lst@length=\count285
-\lst@currlwidth=\dimen171
-\lst@column=\count286
-\lst@pos=\count287
-\lst@lostspace=\dimen172
-\lst@width=\dimen173
-\lst@newlines=\count288
-\lst@lineno=\count289
-\lst@maxwidth=\dimen174
-
+) (/usr/local/texlive/2026/texmf-dist/tex/latex/listings/listings.sty
+\lst@mode=\count275
+\lst@gtempboxa=\box53
+\lst@token=\toks18
+\lst@length=\count276
+\lst@currlwidth=\dimen152
+\lst@column=\count277
+\lst@pos=\count278
+\lst@lostspace=\dimen153
+\lst@width=\dimen154
+\lst@newlines=\count279
+\lst@lineno=\count280
+\abovecaptionskip=\skip49
+\belowcaptionskip=\skip50
+\lst@maxwidth=\dimen155
 (/usr/local/texlive/2026/texmf-dist/tex/latex/listings/lstpatch.sty
 File: lstpatch.sty 2025/11/14 1.11b (Carsten Heinz)
-)
-(/usr/local/texlive/2026/texmf-dist/tex/latex/listings/lstmisc.sty
+) (/usr/local/texlive/2026/texmf-dist/tex/latex/listings/lstmisc.sty
 File: lstmisc.sty 2025/11/14 1.11b (Carsten Heinz)
-\c@lstnumber=\count290
-\lst@skipnumbers=\count291
-\lst@framebox=\box71
-)
-(/usr/local/texlive/2026/texmf-dist/tex/latex/listings/listings.cfg
+\c@lstnumber=\count281
+\lst@skipnumbers=\count282
+\lst@framebox=\box54
+) (/usr/local/texlive/2026/texmf-dist/tex/latex/listings/listings.cfg
 File: listings.cfg 2025/11/14 1.11b listings configuration
 ))
 Package: listings 2025/11/14 1.11b (Carsten Heinz)
-
 ==> First Aid for listings.sty no longer applied!
     Expected:
         2024/09/23 1.10c (Carsten Heinz)
@@ -113,11 +146,11 @@ l.6 \usepackage
 
  
 Here is how much of TeX's memory you used:
- 1993 strings out of 467995
- 29008 string characters out of 5431126
- 434172 words of memory out of 5000000
- 31140 multiletter control sequences out of 15000+600000
- 630362 words of font info for 58 fonts, out of 8000000 for 9000
- 929 hyphenation exceptions out of 8191
- 57i,0n,65p,211b,266s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 1747 strings out of 467350
+ 26742 string characters out of 5415661
+ 434948 words of memory out of 5000000
+ 30889 multiletter control sequences out of 15000+600000
+ 627721 words of font info for 40 fonts, out of 8000000 for 9000
+ 1141 hyphenation exceptions out of 8191
+ 57i,0n,65p,249b,266s stack positions out of 10000i,1000n,20000p,200000b,200000s
 No pages of output.

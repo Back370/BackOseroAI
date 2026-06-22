@@ -1,9 +1,6 @@
-package p26x29;
+package myplayer;
 
-import static ap26.Color.BLOCK;
-import static ap26.Color.BLACK;
-import static ap26.Color.NONE;
-import static ap26.Color.WHITE;
+import static ap26.Color.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -14,41 +11,24 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import ap26.Board;
-import ap26.Color;
-import ap26.Move;
+import ap26.*;
 
 public class MyBoard implements Board, Cloneable {
-  private final Color[] board;
-  private Move move;
+  Color board[];
+  Move move = Move.ofPass(NONE);
 
   public MyBoard() {
     this.board = Stream.generate(() -> NONE).limit(LENGTH).toArray(Color[]::new);
-    this.move = Move.ofPass(NONE);
     init();
   }
 
-  public MyBoard(Board source) {
-    this.board = new Color[LENGTH];
-    syncFrom(source);
-  }
-
-  private MyBoard(Color[] board, Move move) {
+  MyBoard(Color board[], Move move) {
     this.board = Arrays.copyOf(board, board.length);
     this.move = move;
   }
 
-  @Override
   public MyBoard clone() {
     return new MyBoard(this.board, this.move);
-  }
-
-  public void syncFrom(Board source) {
-    for (int k = 0; k < LENGTH; k++) {
-      this.board[k] = source.get(k);
-    }
-    Move sourceMove = source.getMove();
-    this.move = sourceMove == null ? Move.ofPass(NONE) : sourceMove;
   }
 
   void init() {
@@ -58,17 +38,9 @@ public class MyBoard implements Board, Cloneable {
     set(Move.parseIndex("c4"), WHITE);
   }
 
-  @Override
-  public Color get(int k) {
-    return this.board[k];
-  }
+  public Color get(int k) { return this.board[k]; }
+  public Move getMove() { return this.move; }
 
-  @Override
-  public Move getMove() {
-    return this.move;
-  }
-
-  @Override
   public Color getTurn() {
     return this.move.isNone() ? BLACK : this.move.getColor().flipped();
   }
@@ -77,54 +49,44 @@ public class MyBoard implements Board, Cloneable {
     this.board[k] = color;
   }
 
-  @Override
   public boolean equals(Object otherObj) {
-    if (otherObj instanceof MyBoard other) {
+    if (otherObj instanceof MyBoard) {
+      var other = (MyBoard) otherObj;
       return Arrays.equals(this.board, other.board);
     }
     return false;
   }
 
-  @Override
+  public String toString() {
+    return MyBoardFormatter.format(this);
+  }
+
   public int count(Color color) {
     return countAll().getOrDefault(color, 0L).intValue();
   }
 
-  @Override
   public boolean isEnd() {
-    var blackMoves = findNoPassLegalIndexes(BLACK);
-    var whiteMoves = findNoPassLegalIndexes(WHITE);
-    return blackMoves.isEmpty() && whiteMoves.isEmpty();
+    var lbs = findNoPassLegalIndexes(BLACK);
+    var lws = findNoPassLegalIndexes(WHITE);
+    return lbs.size() == 0 && lws.size() == 0;
   }
 
-  @Override
   public Color winner() {
-    int value = score();
-    if (!isEnd() || value == 0) {
-      return NONE;
-    }
-    return value > 0 ? BLACK : WHITE;
+    var v = score();
+    if (isEnd() == false || v == 0 ) return NONE;
+    return v > 0 ? BLACK : WHITE;
   }
 
-  @Override
   public void foul(Color color) {
-    Color winner = color.flipped();
+    var winner = color.flipped();
     IntStream.range(0, LENGTH).forEach(k -> this.board[k] = winner);
   }
 
-  @Override
   public int score() {
-    var counts = countAll();
-    long blackCount = counts.getOrDefault(BLACK, 0L);
-    long whiteCount = counts.getOrDefault(WHITE, 0L);
-    long emptyCount = LENGTH - blackCount - whiteCount;
-    int score = (int) (blackCount - whiteCount);
-
-    if (blackCount == 0 || whiteCount == 0) {
-      score += Integer.signum(score) * emptyCount;
-    }
-
-    return score;
+    var cs = countAll();
+    var bs = cs.getOrDefault(BLACK, 0L);
+    var ws = cs.getOrDefault(WHITE, 0L);
+    return (int) (bs - ws);
   }
 
   Map<Color, Long> countAll() {
@@ -132,29 +94,25 @@ public class MyBoard implements Board, Cloneable {
         Collectors.groupingBy(Function.identity(), Collectors.counting()));
   }
 
-  @Override
   public List<Move> findLegalMoves(Color color) {
     return findLegalIndexes(color).stream()
-        .map(k -> new Move(k, color))
-        .toList();
+        .map(k -> new Move(k, color)).toList();
   }
 
   List<Integer> findLegalIndexes(Color color) {
     var moves = findNoPassLegalIndexes(color);
-    if (moves.isEmpty()) {
-      moves.add(Move.PASS);
-    }
+    if (moves.size() == 0) moves.add(Move.PASS);
     return moves;
   }
 
   List<Integer> findNoPassLegalIndexes(Color color) {
     var moves = new ArrayList<Integer>();
     for (int k = 0; k < LENGTH; k++) {
-      if (this.board[k] != NONE) {
-        continue;
-      }
+      var c = this.board[k];
+      if (c != NONE) continue;
       for (var line : lines(k)) {
-        if (!outflanked(line, color).isEmpty()) {
+        var outflanking = outflanked(line, color);
+        if (outflanking.size() > 0) {
           moves.add(k);
           break;
         }
@@ -166,67 +124,57 @@ public class MyBoard implements Board, Cloneable {
   List<List<Integer>> lines(int k) {
     var lines = new ArrayList<List<Integer>>();
     for (int dir = 0; dir < 8; dir++) {
-      lines.add(Move.line(k, dir));
+      var line = Move.line(k, dir);
+      lines.add(line);
     }
     return lines;
   }
 
   List<Move> outflanked(List<Integer> line, Color color) {
-    if (line.size() <= 1) {
-      return new ArrayList<Move>();
-    }
-
+    if (line.size() <= 1) return new ArrayList<Move>();
     var flippables = new ArrayList<Move>();
-    for (int k : line) {
-      Color current = get(k);
-      if (current == NONE || current == BLOCK) {
-        break;
-      }
-      if (current == color) {
-        return flippables.isEmpty() ? new ArrayList<Move>() : flippables;
-      }
+    for (int k: line) {
+      var c = get(k);
+      if (c == NONE || c == BLOCK) break;
+      if (c == color) return flippables.isEmpty() ? new ArrayList<Move>() : flippables;
       flippables.add(new Move(k, color));
     }
     return new ArrayList<Move>();
   }
 
-  @Override
   public MyBoard placed(Move move) {
-    var copied = clone();
-    copied.move = move;
+    var b = clone();
+    b.move = move;
 
-    if (move.isPass() || move.isNone()) {
-      return copied;
-    }
+    if (move.isPass() || move.isNone())
+      return b;
 
-    int index = move.getIndex();
-    Color color = move.getColor();
-    if (copied.get(index) != NONE) {
-      return copied;
-    }
+    var k = move.getIndex();
+    var color = move.getColor();
+    if (b.get(k) != NONE)
+      return b;
 
-    boolean flippedAny = false;
-    for (var line : copied.lines(index)) {
-      var flippables = copied.outflanked(line, color);
-      if (!flippables.isEmpty()) {
+    var lines = b.lines(k);
+    var flippedAny = false;
+    for (var line: lines) {
+      var flippables = b.outflanked(line, color);
+      if (flippables.size() > 0)
         flippedAny = true;
-      }
-      for (var flipped : flippables) {
-        copied.board[flipped.getIndex()] = color;
+      for (var p: flippables) {
+        b.board[p.getIndex()] = color;
       }
     }
-    if (!flippedAny) {
-      return copied;
-    }
-    copied.set(index, color);
-    return copied;
+    if (!flippedAny)
+      return b;
+    b.set(k, color);
+
+    return b;
   }
 
-  @Override
   public MyBoard flipped() {
-    var copied = clone();
-    IntStream.range(0, LENGTH).forEach(k -> copied.board[k] = copied.board[k].flipped());
-    copied.move = this.move.flipped();
-    return copied;
+    var b = clone();
+    IntStream.range(0, LENGTH).forEach(k -> b.board[k] = b.board[k].flipped());
+    b.move = this.move.flipped();
+    return b;
   }
 }
