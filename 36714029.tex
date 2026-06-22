@@ -1,4 +1,4 @@
-\documentclass[10pt,a4j]{ujarticle} % upLaTeX: ujarticle, pLaTeX: jarticle
+\documentclass[11pt,a4j]{ujarticle} % upLaTeX: ujarticle, pLaTeX: jarticle
 \西暦
 \usepackage{graphicx}
 \usepackage{url}
@@ -220,16 +220,16 @@ List<Move> order(List<Move> moves) {
 }
 \end{lstlisting}
 
-\textbf{実行例}: 盤面描画を省いた自作ベンチ {\verb+myplayer.Bench+}（先後を半々で入替）で測定した．
+\textbf{実行例}: 盤面描画を省いた自作ベンチ {\verb+p26x29.Bench+}（先後を半々で入替）で測定した．
 \begin{lstlisting}[caption=実験1・実験2の実行例,label=ex:1a]
-$ java myplayer.Bench depth
+$ java p26x29.Bench depth
 ## 実験1: 探索深さ depthLimit と勝率 (vs RandomPlayer, 各50局)
 depthLimit=0 :  39勝   7敗   4分 /  50局  勝率  78.0%  得点率  82.0%
 depthLimit=1 :  44勝   4敗   2分 /  50局  勝率  88.0%  得点率  90.0%
 depthLimit=2 :  45勝   3敗   2分 /  50局  勝率  90.0%  得点率  92.0%
 depthLimit=3 :  49勝   1敗   0分 /  50局  勝率  98.0%  得点率  98.0%
 depthLimit=4 :  50勝   0敗   0分 /  50局  勝率 100.0%  得点率 100.0%
-$ java myplayer.Bench shuffle
+$ java p26x29.Bench shuffle
 shuffle 有 :  45勝   3敗   2分 /  50局  勝率  90.0%  得点率  92.0%
 shuffle 無 :  48勝   2敗   0分 /  50局  勝率  96.0%  得点率  96.0%
 \end{lstlisting}
@@ -263,13 +263,13 @@ shuffle 無 & 48/2/0 & 96.0\% \\
 これ以上の深化の効果は飽和する．計算時間は指数的に増えるため，相手の強さに応じて
 深さを選ぶべきだと確認できた．
 
-\textbf{実験2の考察（グループ議論）}: shuffleは\textbf{同評価値の手の選択順}だけを変える．
-ルートの更新条件が {\verb+childValue > alpha+}（狭義）のため，同点の手が複数あると先に試した
+\textbf{実験2の考察}: shuffleは\textbf{同評価値の手の選択順}だけを変える．
+ルートの更新条件が {\verb+childValue > alpha+}のため，同点の手が複数あると先に試した
 手が採用され，shuffle無では {\verb+findLegalMoves+} の盤面走査順（実質固定手），shuffle有では
 ランダムな1手を選ぶ．探索の最善値自体は変わらず，勝敗を左右するのは同点時の手だけなので，
 対Randomでは両者とも90\%超になる．差6pt（45/3/2 対 48/2/0）は各50局の標準誤差（約4pt）に
-収まり統計的に有意でなく，shuffle無が高いのは偶然の範囲だと結論した．shuffleの本質的価値は
-勝率向上ではなく，手を決定論的にせず相手に読まれにくくする点にあると議論で確認した．
+収まり統計的に有意でなく，shuffle無が高いのは偶然の範囲だと結論した．shuffleは
+勝率向上ではなく，手を決定論的にせず相手に読まれにくくする点だと思った
 
 実験3（読解で生じた疑問3つと答え）:
 (1)\textbf{なぜ白番で盤を反転するか}→対称性の利用で探索から色分岐を排除するため．
@@ -309,8 +309,8 @@ e4                ← 合法手
 \textbf{プログラム・実行例}: {\verb+Bench c+} で MyPlayer(depth=2) vs RandomPlayer を
 200局（先後各100）対戦させた．
 \begin{lstlisting}[caption=課題1cの実行例,label=ex:1c]
-$ java myplayer.Bench c
-## 課題1c: MyPlayer vs RandomPlayer 200局 (先手後手各100)
+$ java p26x29.Bench c
+## 課題1c: p26x29 vs RandomPlayer 200局 (先手後手各100)
 MyPlayer(depth=2) : 177勝  18敗   5分 / 200局  勝率  88.5%  得点率  89.8%
 \end{lstlisting}
 
@@ -337,7 +337,7 @@ static final float[][] M2 = {        // 6x6, 黒視点
 
 \textbf{実行例}: 実験プロトコル（改良前→改良後の対Random勝率と直接対決）に従い {\verb+Bench d+} で測定した．
 \begin{lstlisting}[caption=課題1dの実行例,label=ex:1d]
-$ java myplayer.Bench d
+$ java p26x29.Bench d
 ## 課題1d: 重み行列Mの改良 (depth=2)
 (1)改良前 vs Random :  92勝   8敗   0分 / 100局  勝率  92.0%  得点率  92.0%
 (3)改良後 vs Random :  94勝   5敗   1分 / 100局  勝率  94.0%  得点率  94.5%
@@ -377,7 +377,7 @@ return (float)(w[0]*psi + w[1]*(lb-lw) + w[2]*(nb-nw));
 
 \textbf{実行例}: {\verb+Bench e+} で対Randomと，1dの改良マス重み（変更前のより強い相手）の両方と対戦させた．
 \begin{lstlisting}[caption=課題1eの実行例,label=ex:1e]
-$ java myplayer.Bench e
+$ java p26x29.Bench e
 ## 課題1e: 評価関数phi(マス重み+機動力+石数) (depth=2)
 phi評価 vs Random   :  96勝   2敗   2分 / 100局  勝率  96.0%  得点率  97.0%
 phi評価 vs 改良マス重み:  61勝  35敗   4分 / 100局  勝率  61.0%  得点率  63.0%
@@ -420,7 +420,7 @@ List<Move> ordered(Board board, Color color, boolean descending) {
 
 \textbf{実行例}: {\verb+Bench f+} で depth=4・各40局，ランダム順と整列順の評価呼出回数を比較した．
 \begin{lstlisting}[caption=課題1fの実行例,label=ex:1f]
-$ java myplayer.Bench f
+$ java p26x29.Bench f
 ## 課題1f: move ordering の枝刈り効果 (depth=4, 各40局, 評価呼出回数)
 ランダム順   : 評価呼出 650,207 回, 勝率  97.5%
 move ordering: 評価呼出 2,238,040 回, 勝率 100.0%
@@ -586,20 +586,17 @@ book導入で {\verb+p26x42+} が {\verb+p26x42base+} に 83.33\% と，
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{課題3}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-本演習を通じた総括的な気づきを記す．\textbf{考察}: 課題1〜2を通じ，AI開発は
+\textbf{考察}: 課題1〜2を通じ，AI開発は
 「思いついた工夫を入れる」段階より「その工夫が本当に効いたかを測る」段階のほうが
 本質的だと痛感した．実際，機動力を足した初期のφ評価(1e)は直感では強化のはずが実測では
 対強相手30\%と失敗し，位置評価を主軸に段階別へ作り直して初めて変更前を上回れた．move
-ordering(1f)も直感に反し浅い探索では逆効果だった．逆にbookはnpsを下げつつ総コストを削減する
-（プレイヤについて節）という直感に反する結果だった．したがって今後も，変更ごとに
+ordering(1f)も直感に反し浅い探索では逆効果だった．逆にbookはnpsを下げつつ総コストを削減するという直感に反する結果だった．したがって今後も，変更ごとに
 ベースラインとの多数対局・プロファイルで定量検証する開発サイクルを徹底したい．
 
 \section{参考文献・謝辞}
-本演習で配布されたリスト1〜9（パッケージ {\verb+ap26+} / {\verb+myplayer+}）および
+本演習で配布されたリスト1〜9（パッケージ {\verb+ap26+} / {\verb+p26x29+}）および
 総当たり戦フレームワーク {\verb+ap26.league+} を参照した．
-課題1の勝率測定は自作の自動対戦ベンチ {\verb+myplayer.Bench+} により，
+課題1の勝率測定は自作の自動対戦ベンチ {\verb+p26x29.Bench+} により，
 課題2の探索速度は本番環境 {\tt cse.cs.nitech.ac.jp} 上での1局計測により行った．
-
-
 
 \end{document}

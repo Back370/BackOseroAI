@@ -1,4 +1,4 @@
-package myplayer;
+package p26x29;
 
 import java.util.ArrayList;
 import java.util.List;

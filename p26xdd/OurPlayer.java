@@ -1,4 +1,4 @@
-package p26x29;
+package p26xdd;
 
 import static ap26.Color.BLACK;
 import static ap26.Color.WHITE;

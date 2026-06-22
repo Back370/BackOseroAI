@@ -1,4 +1,4 @@
-package myplayer;
+package p26x29;
 
 import static ap26.Color.BLACK;
 import static ap26.Color.WHITE;
@@ -45,8 +45,8 @@ public class MyGame {
    * 自分のプレイヤーを試したい場合はこのメソッドを編集する。
    */
   public static void main(String args[]) {
-    Player player1 = new myplayer.MyPlayer(BLACK);
-    Player player2 = new myplayer.RandomPlayer(WHITE);
+    Player player1 = new p26x29.MyPlayer(BLACK);
+    Player player2 = new p26x29.RandomPlayer(WHITE);
     Board board = new MyBoard();
     MyGame game = new MyGame(board, player1, player2);
     game.play();
